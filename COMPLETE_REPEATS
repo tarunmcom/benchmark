@@ -1,0 +1,62 @@
+# Complete Repeats
+
+Re-run the entire benchmark suite multiple times end-to-end.
+
+## Quick Start
+
+Add one line below REPEATS,  to your existing `.conf` file:
+
+```bash
+COMPLETE_REPEATS=2
+```
+
+Run as usual:
+
+```bash
+./benchmark.sh -c benchmark.conf
+```
+
+## How It Works
+
+**`REPEATS`** (existing) repeats each individual benchmark before moving to the next:
+
+```
+server start -> bench(c=25,in=500,out=50) x3 -> bench(c=25,in=500,out=100) x3 -> ... -> server stop
+```
+
+**`COMPLETE_REPEATS`** (new) runs all benchmarks end-to-end, then repeats from the beginning:
+
+```
+Iteration 1: server start -> all benchmarks -> server stop -> next model -> ...
+Iteration 2: server start -> all benchmarks -> server stop -> next model -> ...
+```
+
+Both can be combined. With `REPEATS=2` and `COMPLETE_REPEATS=3`, each individual benchmark runs twice per iteration, and the full suite runs 3 times.
+
+## Output Structure
+
+With `COMPLETE_REPEATS=1` (default), output is unchanged:
+
+```
+run_YYYYMMDD_HHMMSS/
+  Model-Name/bf16_tp1/bench_c25_in500_out50_rep1.log
+```
+
+With `COMPLETE_REPEATS=2`, each iteration gets its own subdirectory:
+
+```
+run_YYYYMMDD_HHMMSS/
+  iter_1/Model-Name/bf16_tp1/bench_c25_in500_out50_rep1.log
+  iter_2/Model-Name/bf16_tp1/bench_c25_in500_out50_rep1.log
+  results_tracker.txt      # shared, tracks all iterations
+```
+
+## Resume Support
+
+Resume works across iterations. If interrupted mid-run:
+
+```bash
+./benchmark.sh -c benchmark.conf --resume
+```
+
+Completed benchmarks from all iterations are skipped automatically.
